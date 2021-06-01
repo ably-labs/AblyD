@@ -1,0 +1,32 @@
+// Copyright 2013 Joe Walnes and the websocketd team.
+// All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package libablyd
+
+import (
+	"time"
+)
+
+type Config struct {
+	// base initiaization fields
+	StartupTime    time.Time // Server startup time (used for dev console caching).
+	CommandName    string    // Command to execute.
+	CommandArgs    []string  // Additional args to pass to command.
+	ServerSoftware string    // Value to pass to SERVER_SOFTWARE environment variable (e.g. websocketd/1.2.3).
+	CloseMs        uint      // Milliseconds to start sending signals
+
+	HandshakeTimeout time.Duration // time to finish handshake (default 1500ms)
+
+	// settings
+	Binary         bool     // Use binary communication (send data in chunks they are read from process)
+	ScriptDir      string   // Base directory for websocket scripts.
+	UsingScriptDir bool     // Are we running with a script dir.
+	DevConsole     bool     // Enable dev console. This disables StaticDir and CgiDir.
+
+	// created environment
+	Env       []string // Additional environment variables to pass to process ("key=value").
+	ParentEnv []string // Variables kept from os.Environ() before sanitizing it for subprocess.
+	AblyKey   string // Ably API key
+}

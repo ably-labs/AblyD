@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<script src="https://cdn.ably.io/lib/ably.min-1.js"></script>
+<h1>AblyD Example</h1>
+
+<div class="row">
+  <p>This demo will make a request through Ably to our server, telling it to publish output from its current script to the namespace 'test'. This page is then subscribed to outputs from the server to Ably to the 'test:serveroutput' channel.</p>
+  <p>Make sure to replace the 'INSERT_API_KEY_HERE' in the JavaScript with your Ably API key!</p>
+  <button onclick="publish()">Publish the command to the server to run the script</button>
+</div>
+
+<pre id="log"></pre>
+<script>
+  // This should eventually be the message ID, but currently the go lib doesn't
+  // Let you access the message ID
+  const messageID = Math.random();
+  // helper function: log message to screen
+  function log(msg) {
+    document.getElementById('log').textContent += msg + '\n';
+  }
+  // Messages from the server will come as ArrayBuffers, so need decoding
+  let enc = new TextDecoder("utf-8");
+
+  let ably = new Ably.Realtime('INSERT_API_KEY_HERE');
+  let commandChannel = ably.channels.get("command");
+
+  commandChannel.presence.subscribe((msg) => {
+    console.log(msg);
+  })
+
+
+  commandChannel.subscribe("new-instance", (msg) => {
+    if (msg.data.MessageID == messageID) {
+      let inputChannel = ably.channels.get(msg.data.Pid + ":serverinput");
+      let outputChannel = ably.channels.get("[?rewind=20]" + msg.data.Pid + ":serveroutput");
+      outputChannel.subscribe((msg) => {
+        console.log(enc.decode(msg.data));
+      });
+
+      inputChannel.presence.subscribe((msg) => {
+        console.log("input channel presence")
+        console.log(msg);
+      })
+
+    }
+  });
+
+  function publish() {
+    let data = {
+      "MessageID": messageID.toString(),
+      "Action": "start",
+      "Args": [ "50" ]
+    };
+    commandChannel.publish("start", data);
+  }
+</script>

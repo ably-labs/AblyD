@@ -1,0 +1,305 @@
+asyncapi: '2.1.0'
+info:
+  title: AblyD
+  version: 1.0.0
+  description: AblyD allows for simple creation and control of processes on whatever device it's running on.
+
+servers:
+  ably:
+    url: wss://realtime.ably.io
+    description: Endpoint used by Ably's Realtime client libraries
+    protocol: wss
+    security:
+      - apiKey: []
+      - jwt: []
+      - httpBearerToken: []
+  mqtt:
+    url: mqtt://mqtt.ably.io:{port}
+    description: Ably's MQTT endpoint
+    variables:
+      port:
+        description: Secure connection (TLS) is available through port 8883.
+        default: '8883'
+        enum:
+          - '1883'
+          - '8883'
+    security:
+      - mqttApiKey: []
+      - mqttJwt: []
+    protocol: mqtt
+    protocolVersion: '3.1.1'
+  rest:
+    url: https://rest.ably.io
+    description: Ably REST API
+    protocol: https
+
+defaultContentType: application/json
+
+channels:
+  command:
+    subscribe:
+      summary: "Responses from the server when starting a process"
+      message:
+        $ref: '#/components/messages/ProcessStarted'
+    publish:
+      summary: "Request to the overarching AblyD system"
+      message:
+        $ref: '#/components/messages/StartProcess'
+  '{pid}:serverinput':
+    publish:
+      summary: "Data to send into the stdin of the process with matching pid to the namespace."
+      message:
+        $ref: '#/components/messages/ProcessInput'
+    parameters:
+      pid:
+        description: The process ID returned when starting a process via the `command` channel.
+        schema:
+          type: string
+  '{pid}:serveroutput':
+    subscribe:
+      summary: "Messages from the stdout of a process being run."
+      message:
+        $ref: '#/components/messages/ProcessOutput'
+    parameters:
+      pid:
+        description: The process ID returned when starting a process via the `command` channel.
+        schema:
+          type: string
+        
+components:
+  schemas:
+    publishMessageWrapper:
+      action:
+        type: integer
+        description: Value representing the type of message
+        example: 15
+      channel:
+        type: string
+        description: Name of the channel to publish to
+        example: command
+      msgSerial:
+        type: integer
+        description: The message serial
+        example: 0
+        
+    subscribeMessageWrapper:
+      $ref: "#/components/schemas/publishMessageWrapper"
+      id:
+        type: string
+        description: lol
+        example: "RHtEBirBjw:0"
+      connectionId:
+        type: string
+        description: lol
+        example: "RHtEBirBjw"
+      connectionSerial:
+        type: integer
+        description: The connection serial
+        example: 1
+      channelSerial: 
+        type: string
+        description: The channel serial
+        example: "108jHTRAgB0gyo35419682:1"
+        timestamp:
+          type: integer
+          description: The time at which an Ably server first received this message
+          example: 1627224129057
+  
+    message:
+      clientId:
+        type: string
+        description: ClientID which sent the message
+      encoding:
+        type: string
+        description: Encoding of the message data
+        enum:
+          - json
+          - msgpack
+          - base64
+
+    presenceMessage:
+      id:
+        type: string
+        description: Message ID
+      clientId:
+        type: string
+        description: ClientID which sent the message
+      connectionId:
+        type: string
+        description: Connection which sent the message's ID
+      timestamp:
+        type: integer
+        description: Timestamp that the message was received by an Ably server
+      encoding:
+        type: string
+        description: Encoding of the message data
+        enum:
+          - json
+          - msgpack
+          - base64
+      action:
+        type: integer
+        description: Type of Presence Action this message represents
+        enum:
+          - 1
+          - 2
+          - 3
+          - 4
+  messages:
+    StartProcess:
+      payload:
+        type: object
+        example:
+          name: start
+          data:
+            MessageID: 384n92923n
+            Args:
+              - --debug
+              - --other-arg
+        properties:
+          messages:
+            type: array
+            items:
+              type: object
+              properties:
+                $ref: "#/components/schemas/message"
+                name:
+                  type: string
+                  description: Indicates the action to perform on the server
+                  enum:
+                  - "start"
+                  - "stop"
+                data:
+                  type: object
+                  description: Object containing details on action to perform
+                  required:
+                    - MessageID
+                  properties:
+                    MessageID:
+                      type: string
+                      description: Unique identifier for this message to be used by the server to respond
+                    Args:
+                      type: array
+                      description: Additional args to pass to the executable to be run
+                      items:
+                        type: string
+          $ref: "#/components/schemas/publishMessageWrapper"
+
+    ProcessStarted:
+      payload:
+        type: object
+        example:
+          name: new-instance
+          data:
+            MessageID: 384n92923n
+            Pid: "83483992"
+        required:
+          - name
+          - data
+        properties:
+          messages:
+            type: array
+            items:
+              type: object
+              properties:
+                $ref: "#/components/schemas/message"
+                name:
+                  type: string
+                  description: Indicates the action the server is peforming
+                  enum:
+                    - new-instance
+                data:
+                  type: object
+                  description: Object containing details on process that has started.
+                  required:
+                    - MessageID
+                    - Pid
+                  properties:
+                    MessageID:
+                      type: string
+                      description: Unique identifier for the requesting message. Returned so the requester can identify this response is for them.
+                    Pid:
+                      type: string
+                      description: Unique identifier for the process. Indicates the namespace in Ably that the process will use for input/output.
+          $ref: "#/components/schemas/subscribeMessageWrapper"
+                
+    ProcessOutput:
+      payload:
+        type: object
+        example:
+          name: 'message'
+          data: "Some line from the stdout"
+        required:
+          - name
+          - data
+        properties:
+          messages:
+            type: array
+            items:
+              type: object
+              properties:
+                $ref: "#/components/schemas/message"
+                name:
+                  type: string
+                  description: Indicates the type of message.
+                  enum:
+                    - message
+                data:
+                  type: string
+                  description: A line from the stdout of the process.
+          $ref: "#/components/schemas/subscribeMessageWrapper"
+            
+            
+    ProcessInput:
+      payload:
+        type: object
+        example:
+          name: stdin-data
+          data: "Some line to feed into the stdin"
+        required:
+          - name
+          - data
+        properties:
+          messages:
+            type: array
+            items:
+              type: object
+              properties:
+                $ref: "#/components/schemas/message"
+                name:
+                  type: string
+                  description: An informative name for the action.
+                data:
+                  type: string
+                  description: A line to give to the stdin of the process.
+          $ref: "#/components/schemas/publishMessageWrapper"
+            
+  securitySchemes:
+    mqttApiKey:
+      type: apiKey
+      in: user
+      description: >-
+        Provide your API key's public part as the user and the API key's secret
+        part as the password. Only usable over a secure connection.
+    apiKey:
+      type: apiKey
+      in: user
+      description: Provide your API key
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        JWT generated matching the [Ably JWT
+        requirements](https://www.ably.io/documentation/core-features/authentication#ably-jwt)
+    mqttJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        JWT generated matching the [Ably JWT
+        requirements](https://www.ably.io/documentation/core-features/authentication#ably-jwt).
+        Use the token as your user, and keep the password blank
+    httpBearerToken:
+      type: http
+      scheme: bearer

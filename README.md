@@ -12,12 +12,11 @@ Now all you need to do is run the main go file, passing in the command line comm
 ~ $ go run . --ablykey=YOUR_API_KEY ./examples/bash/count.sh
 ```
 
-The program is now running, waiting for a message in the `command` channel in Ably to be sent. The message should match the structure:
+The program is now running, waiting for a message in the `command` channel in Ably to be sent. The message's data field should match the structure, with the value `start` for the message's name:
 
 ```json
 {
   "MessageID": "unique string value",
-  "Action": "start",
   "Args": [ "some", "additional", "args", "for", "the", "programs" ]
 }
 ```

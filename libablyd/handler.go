@@ -53,14 +53,12 @@ func startUpCommandChannel(ablyRealtime *ably.Realtime) (ablyCommandChannel *abl
 
 func (ablyDHandler *AblyDHandler) ListenForCommands(wg *sync.WaitGroup) {
 	// Subscribe to messages sent on the channel
-	ablyDHandler.ablyCommandChannel.SubscribeAll(context.Background(), func(msg *ably.Message) {
+	ablyDHandler.ablyCommandChannel.Subscribe(context.Background(), "start", func(msg *ably.Message) {
 		stringData := msg.Data.(string)
 	    data := AblyDInstanceStartMessage{}
 	    json.Unmarshal([]byte(stringData), &data)
 
-		if data.Action == "stop" {
-			wg.Done()
-		} else if data.Action != "" {
+	    if data.MessageID != "" {
 			if (ablyDHandler.ablyDState.MaxInstances <= len(ablyDHandler.ablyDState.Instances)) {
 				ablyDHandler.ablyCommandChannel.Publish(context.Background(), "Error", "Failed to create new instance: Max instances reached")
 			} else {
@@ -69,6 +67,9 @@ func (ablyDHandler *AblyDHandler) ListenForCommands(wg *sync.WaitGroup) {
 				go ablyDHandler.Accept(data.MessageID, data.Args)
 			}
 		}
+	})
+	ablyDHandler.ablyCommandChannel.Subscribe(context.Background(), "stop", func(msg *ably.Message) {
+		wg.Done()
 	})
 	ablyDHandler.log.Access("ablyD", "READY")
 }

@@ -7,36 +7,16 @@ package main
 
 import (
 	"ablyD/libablyd"
-	"fmt"
 	"sync"
 
 	"github.com/ably/ably-go/ably"
 	"github.com/joho/godotenv"
 )
 
-func logfunc(l *libablyd.LogScope, level libablyd.LogLevel, levelName string, category string, msg string, args ...interface{}) {
-	if level < l.MinLevel {
-		return
-	}
-	fullMsg := fmt.Sprintf(msg, args...)
-
-	assocDump := ""
-	for index, pair := range l.Associated {
-		if index > 0 {
-			assocDump += " "
-		}
-		assocDump += fmt.Sprintf("%s:'%s'", pair.Key, pair.Value)
-	}
-
-	l.Mutex.Lock()
-	fmt.Printf("%s | %-6s | %-10s | %s | %s\n", libablyd.Timestamp(), levelName, category, assocDump, fullMsg)
-	l.Mutex.Unlock()
-}
-
 func main() {
 	config := parseCommandLine()
 
-	log := libablyd.RootLogScope(config.LogLevel, logfunc)
+	log := libablyd.RootLogScope(config.LogLevel, libablyd.Logfunc)
 
 	godotenv.Load()
 
@@ -51,6 +31,7 @@ func main() {
 	}
 
 	config.Config.MaxForks = config.MaxForks
+	config.Config.LogLevel = config.LogLevel
 	handler, _ := libablyd.NewAblyDHandler(client, config.Config, log)
 
 	var wg sync.WaitGroup

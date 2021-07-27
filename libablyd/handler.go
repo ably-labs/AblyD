@@ -76,13 +76,14 @@ func (ablyDHandler *AblyDHandler) ListenForCommands(wg *sync.WaitGroup) {
 
 func (ablyDHandler *AblyDHandler) Accept(messageID string, args []string) {
 	allArgs := append(ablyDHandler.config.CommandArgs, args...)
+
+	log := RootLogScope(ablyDHandler.config.LogLevel, Logfunc)
+
 	launched, err := launchCmd(ablyDHandler.command, allArgs, ablyDHandler.config.Env)
 	if err != nil {
 		ablyDHandler.log.Error("process", "Could not launch process (%s)", err)
 		return
 	}
-
-	log := ablyDHandler.log
 
 	pid := strconv.Itoa(launched.cmd.Process.Pid)
 

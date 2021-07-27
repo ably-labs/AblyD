@@ -8,6 +8,7 @@ package libablyd
 import (
 	"sync"
 	"time"
+	"fmt"
 )
 
 type LogLevel int
@@ -30,7 +31,7 @@ type LogScope struct {
 	Parent     *LogScope   // Parent scope
 	MinLevel   LogLevel    // Minimum log level to write out.
 	Mutex      *sync.Mutex // Should be shared across all LogScopes that write to the same destination.
-	Associated []AssocPair // Additional data associated with scope
+	Associated map[string]string // Additional data associated with scope
 	LogFunc    LogFunc
 }
 
@@ -40,7 +41,11 @@ type AssocPair struct {
 }
 
 func (l *LogScope) Associate(key string, value string) {
-	l.Associated = append(l.Associated, AssocPair{key, value})
+	l.Associated[key] = value
+}
+
+func (l *LogScope) Deassociate(key string) {
+	delete(l.Associated, key)
 }
 
 func (l *LogScope) Debug(category string, msg string, args ...interface{}) {
@@ -72,7 +77,7 @@ func (parent *LogScope) NewLevel(logFunc LogFunc) *LogScope {
 		Parent:     parent,
 		MinLevel:   parent.MinLevel,
 		Mutex:      parent.Mutex,
-		Associated: make([]AssocPair, 0),
+		Associated: make(map[string]string),
 		LogFunc:    logFunc}
 }
 
@@ -81,7 +86,7 @@ func RootLogScope(minLevel LogLevel, logFunc LogFunc) *LogScope {
 		Parent:     nil,
 		MinLevel:   minLevel,
 		Mutex:      &sync.Mutex{},
-		Associated: make([]AssocPair, 0),
+		Associated: make(map[string]string),
 		LogFunc:    logFunc}
 }
 
@@ -108,4 +113,26 @@ func LevelFromString(s string) LogLevel {
 	default:
 		return LogUnknown
 	}
+}
+
+func Logfunc(l * LogScope, level LogLevel, levelName string, category string, msg string, args ...interface{}) {
+	if level < l.MinLevel {
+		return
+	}
+	fullMsg := fmt.Sprintf(msg, args...)
+
+	assocDump := ""
+
+	index := 0
+	for key, value := range l.Associated {
+		if index > 0 {
+			assocDump += " "
+		}
+		index++
+		assocDump += fmt.Sprintf("%s:'%s'", key, value)
+	}
+
+	l.Mutex.Lock()
+	fmt.Printf("%s | %-6s | %-10s | %s | %s\n", Timestamp(), levelName, category, assocDump, fullMsg)
+	l.Mutex.Unlock()
 }

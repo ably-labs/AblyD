@@ -12,6 +12,7 @@ type Config struct {
 	
 	// settings
 	MaxForks       int 		// Max forks
+	LogLevel       LogLevel
 
 	// created environment
 	Env       []string // Additional environment variables to pass to process ("key=value").

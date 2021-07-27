@@ -14,41 +14,33 @@
   // Let you access the message ID
   const messageID = Math.random();
   // helper function: log message to screen
-  function log(msg) {
-    document.getElementById('log').textContent += msg + '\n';
+  function log(type, msg) {
+    document.getElementById('log').textContent +=  type + ': '+ JSON.stringify(msg) + '\n';
   }
   // Messages from the server will come as ArrayBuffers, so need decoding
   let enc = new TextDecoder("utf-8");
 
-  let ably = new Ably.Realtime('INSERT_API_KEY_HERE');
+  // Get an Ably API key from https://www.ably.com/accounts/any/apps/any/api_keys
+  let ably = new Ably.Realtime('YOUR_API_KEY');
   let commandChannel = ably.channels.get("command");
 
   commandChannel.presence.subscribe((msg) => {
-    console.log(msg);
+    log('Presence', msg.data);
   })
-
 
   commandChannel.subscribe("new-instance", (msg) => {
     if (msg.data.MessageID == messageID) {
       let inputChannel = ably.channels.get(msg.data.Pid + ":serverinput");
       let outputChannel = ably.channels.get("[?rewind=20]" + msg.data.Pid + ":serveroutput");
       outputChannel.subscribe((msg) => {
-        console.log(enc.decode(msg.data));
+        log('Message', enc.decode(msg.data));
       });
-
-      inputChannel.presence.subscribe((msg) => {
-        console.log("input channel presence")
-        console.log(msg);
-      })
-
     }
   });
 
   function publish() {
     let data = {
-      "MessageID": messageID.toString(),
-      "Action": "start",
-      "Args": [ "50" ]
+      "MessageID": messageID.toString()
     };
     commandChannel.publish("start", data);
   }

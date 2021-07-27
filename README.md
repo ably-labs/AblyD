@@ -9,7 +9,7 @@ Firstly you need to get an Ably API key. You can sign up for an account with [Ab
 Now all you need to do is run the main go file, passing in the command line command you want to be run as a parameter! For example, to use a bash file `count.sh`, which is included in this repo's `examples` folder, just run:
 
 ```bash
-~ $ go run . --apikey=YOUR_API_KEY ./examples/bash/count.sh
+~ $ ./ablyD --apikey=YOUR_API_KEY ./examples/bash/count.sh
 ```
 
 The program is now running, waiting for a message in the `command` channel in Ably to be sent. The message's data field should match the structure, with the value `start` for the message's name:

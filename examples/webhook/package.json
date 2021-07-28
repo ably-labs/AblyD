@@ -1,0 +1,16 @@
+{
+  "name": "webhook",
+  "version": "1.0.0",
+  "description": "Send output from an AblyD instance to a webhook of your choice",
+  "main": "webhook.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ably": "^1.2.11",
+    "axios": "^0.21.1",
+    "dotenv": "^10.0.0"
+  }
+}

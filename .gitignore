@@ -15,3 +15,6 @@
 .env
 
 .Ds_Store
+
+# NodeJS
+node_modules

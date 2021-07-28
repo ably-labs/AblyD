@@ -19,8 +19,6 @@
   function log(type, msg) {
     document.getElementById('log').textContent += `${type}: ${JSON.stringify(msg)}\n`;
   }
-  // Messages from the server will come as ArrayBuffers, so need decoding
-  let enc = new TextDecoder("utf-8");
 
   // Get an Ably API key from https://www.ably.com/accounts/any/apps/any/api_keys
   let ably = new Ably.Realtime('YOUR_API_KEY');
@@ -35,7 +33,7 @@
       let inputChannel = ably.channels.get(`${msg.data.ChannelPrefix}${msg.data.Pid}:serverinput`);
       let outputChannel = ably.channels.get(`[?rewind=20]${msg.data.ChannelPrefix}${msg.data.Pid}:serveroutput`);
       outputChannel.subscribe((outputMsg) => {
-        log(`Message from ${msg.data.ChannelPrefix}${msg.data.Pid}`, enc.decode(outputMsg.data));
+        log(`Message from ${msg.data.ChannelPrefix}${msg.data.Pid}`, outputMsg.data);
       });
     }
   });

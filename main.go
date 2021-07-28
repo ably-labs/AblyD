@@ -30,6 +30,12 @@ func main() {
 		return
 	}
 
+	config.ProcessConfig.MaxForks = config.MaxForks
+	config.ProcessConfig.LogLevel = config.LogLevel
+	config.ProcessConfig.ServerID = config.ServerID
+	config.ProcessConfig.ChannelNamespace = config.ChannelNamespace
+	config.ProcessConfig.ChannelPrefix = config.ChannelPrefix
+
 	handler, _ := libablyd.NewAblyDHandler(client, config.ProcessConfig, log)
 
 	var wg sync.WaitGroup

@@ -40,7 +40,7 @@ func (ablyEndpoint *AblyEndpoint) Output() chan []byte {
 }
 
 func (ablyEndpoint *AblyEndpoint) Send(msg []byte) bool {
-	err := ablyEndpoint.outputChannel.Publish(context.Background(), "message", msg)
+	err := ablyEndpoint.outputChannel.Publish(context.Background(), "message", string(msg[:]))
 
 	if err != nil {
 		ablyEndpoint.log.Trace("ably", "Cannot send: %s", err)

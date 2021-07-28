@@ -26,11 +26,13 @@ Once the server receives a message in the `command` channel, it will start up an
 ```json
 {
 	"MessageID": "unique string value matching the requesting MessageID",
-	"Pid": "unique identifier for the process"
+	"Pid": "process_id",
+	"Namespace": "ablyd",
+	"ChannelPrefix": "ablyd:server_id"
 }
 ```
 
-The client can identify the instance which has started for them by the `MessageID`, then use the `Pid` to connect to an input and an output channel for the process. These will be of structure `{Pid}:serverinput` and `{Pid}:serveroutput`.
+The client can identify the instance which has started for them by the `MessageID`, then use the `Prefix` to connect to an input and an output channel for the process. These will be of structure `{Prefix}{Pid}:serverinput` and `{Prefix}{Pid}:serveroutput`.
 
 Subscribing to the `serveroutput` channel will allow the client to receive any stdout messages from the server. The client can also publish messages into the `serverinput` channel which will be passed into the stdin of the process.
 
@@ -42,6 +44,8 @@ AblyD makes use of Ably Presence to identify what AblyD instances exist, and wha
 
 ```json
 {
+	"ServerID": "my-server-id",
+	"Namespace": "ablyd",
 	"MaxInstances": 20,
 	"Instances": {
 		"3490348": "Running",

@@ -12,18 +12,22 @@ import (
 	"os/exec"
 
 	"ablyD/libablyd"
+	"github.com/rs/xid"
 )
 
 type Config struct {
 	MaxForks          int      // Number of allowable concurrent forks
 	LogLevel          libablyd.LogLevel
 	AblyAPIKey		  string
-	*libablyd.Config
+	ServerID		  string
+	ChannelNamespace  string
+	ChannelPrefix  	  string	 // Ably channel prefix to use
+	*libablyd.ProcessConfig
 }
 
 func parseCommandLine() *Config {
 	var mainConfig Config
-	var config libablyd.Config
+	var config libablyd.ProcessConfig
 
 	flag.Usage = func() {}
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
@@ -33,6 +37,8 @@ func parseCommandLine() *Config {
 	logLevelFlag := flag.String("loglevel", "access", "Log level, one of: debug, trace, access, info, error, fatal")
 	maxForksFlag := flag.Int("maxforks", 20, "Max forks, zero means unlimited")
 	ablyApiKey := flag.String("apikey", "INSERT_API_KEY", "Ably API key")
+	channelNamespace := flag.String("namespace", "ablyd", "Ably Channel Namespace")
+	serverID := flag.String("serverid", xid.New().String(), "Unique ID for the server")
 
 	err := flag.CommandLine.Parse(os.Args[1:])
 	if err != nil {
@@ -46,6 +52,9 @@ func parseCommandLine() *Config {
 	}
 
 	mainConfig.AblyAPIKey = *ablyApiKey
+	mainConfig.ServerID = *serverID
+	mainConfig.ChannelNamespace= *channelNamespace
+	mainConfig.ChannelPrefix = *channelNamespace + ":" + *serverID + ":"
 	mainConfig.MaxForks = *maxForksFlag
 	mainConfig.LogLevel = libablyd.LevelFromString(*logLevelFlag)
 
@@ -83,7 +92,6 @@ func parseCommandLine() *Config {
 	if len(args) > 0 {
 		if path, err := exec.LookPath(args[0]); err == nil {
 			config.CommandName = path // This can be command in PATH that we are able to execute
-			fmt.Println(config.CommandName)
 			config.CommandArgs = flag.Args()[1:]
 			// config.UsingScriptDir = false
 		} else {
@@ -93,7 +101,7 @@ func parseCommandLine() *Config {
 		}
 	}
 
-	mainConfig.Config = &config
+	mainConfig.ProcessConfig = &config
 
 	return &mainConfig
 }

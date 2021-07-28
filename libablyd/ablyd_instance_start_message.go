@@ -2,5 +2,6 @@ package libablyd
 
 type AblyDInstanceStartMessage struct {
     MessageID string `json:"messageId"`
-    Args []string   `json:"args"`
+    ServerID  string `json:"serverID"`
+    Args []   string `json:"args"`
 }

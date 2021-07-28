@@ -23,16 +23,14 @@ func main() {
 	client, err := ably.NewRealtime(
 		ably.WithKey(config.AblyAPIKey),
 		ably.WithEchoMessages(false),
-		ably.WithClientID("ablyD"))
+		ably.WithClientID(config.ServerID))
 
 	if err != nil {
 		log.Error("ablyD", "%s", err)
 		return
 	}
 
-	config.Config.MaxForks = config.MaxForks
-	config.Config.LogLevel = config.LogLevel
-	handler, _ := libablyd.NewAblyDHandler(client, config.Config, log)
+	handler, _ := libablyd.NewAblyDHandler(client, config.ProcessConfig, log)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

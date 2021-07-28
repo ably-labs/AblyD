@@ -1,7 +1,6 @@
 package libablyd
 
 import (
-	"errors"
 	"strconv"
 	"encoding/json"
 
@@ -10,11 +9,8 @@ import (
 	"sync"
 )
 
-var ScriptNotFoundError = errors.New("script not found")
-
-
 type AblyDHandler struct {
-	config *Config
+	config *ProcessConfig
 	ablyRealtime   *ably.Realtime // Ably Realtime Instance
 	ablyCommandChannel *ably.RealtimeChannel
 
@@ -25,17 +21,17 @@ type AblyDHandler struct {
 	command string
 }
 
-// TODO: Replace s
-func NewAblyDHandler(ablyRealtime *ably.Realtime, config *Config, newLog *LogScope) (ablyDHandler *AblyDHandler, err error) {
+func NewAblyDHandler(ablyRealtime *ably.Realtime, config *ProcessConfig, newLog *LogScope) (ablyDHandler *AblyDHandler, err error) {
 	ablyDHandler = &AblyDHandler{config: config, ablyRealtime: ablyRealtime}
 	ablyDHandler.command = config.CommandName
 
-	ablyDHandler.ablyCommandChannel = startUpCommandChannel(ablyRealtime)
-	ablyDHandler.ablyDState = AblyDInstanceState{config.MaxForks, make(map[int]string)}
+	ablyDHandler.startUpCommandChannel(ablyRealtime)
+	ablyDHandler.ablyDState = AblyDInstanceState{config.ServerID, config.ChannelNamespace, config.MaxForks, make(map[int]string)}
 
 	ablyDHandler.enterPresence()
 
 	ablyDHandler.log = newLog
+
 	ablyDHandler.log.Associate("command", ablyDHandler.command)
 
 	return ablyDHandler, nil
@@ -45,10 +41,9 @@ func (ablyDHandler *AblyDHandler) enterPresence() {
 	ablyDHandler.ablyCommandChannel.Presence.Enter(context.Background(), ablyDHandler.ablyDState)
 }
 
-func startUpCommandChannel(ablyRealtime *ably.Realtime) (ablyCommandChannel *ably.RealtimeChannel) {
-	commandChannel := ablyRealtime.Channels.Get("command")
-
-	return commandChannel
+func (ablyDHandler *AblyDHandler) startUpCommandChannel(ablyRealtime *ably.Realtime) {
+	commandChannel := ablyDHandler.config.ChannelNamespace + ":command"
+	ablyDHandler.ablyCommandChannel = ablyRealtime.Channels.Get(commandChannel)
 }
 
 func (ablyDHandler *AblyDHandler) ListenForCommands(wg *sync.WaitGroup) {
@@ -59,6 +54,9 @@ func (ablyDHandler *AblyDHandler) ListenForCommands(wg *sync.WaitGroup) {
 	    json.Unmarshal([]byte(stringData), &data)
 
 	    if data.MessageID != "" {
+	    	if data.ServerID != "" && data.ServerID != ablyDHandler.config.ServerID {
+	    		return
+	    	}
 			if (ablyDHandler.ablyDState.MaxInstances <= len(ablyDHandler.ablyDState.Instances)) {
 				ablyDHandler.ablyCommandChannel.Publish(context.Background(), "Error", "Failed to create new instance: Max instances reached")
 			} else {
@@ -93,8 +91,8 @@ func (ablyDHandler *AblyDHandler) Accept(messageID string, args []string) {
 	defer log.Access("session", "DISCONNECT")
 
 	process := NewProcessEndpoint(launched, ablyDHandler.log)
-
-    channelOutput := ablyDHandler.ablyRealtime.Channels.Get(pid + ":serveroutput")
+	serverOutputChannel :=  ablyDHandler.config.ChannelPrefix + pid + ":serveroutput"
+    channelOutput := ablyDHandler.ablyRealtime.Channels.Get(serverOutputChannel)
 	channelInput := ablyDHandler.ablyRealtime.Channels.Get("[?rewind=10]"+ pid + ":serverinput")
 
 	// Enter presence of serverinput
@@ -102,8 +100,8 @@ func (ablyDHandler *AblyDHandler) Accept(messageID string, args []string) {
 
 	ablyEndpoint := NewAblyEndpoint(channelInput, channelOutput, log)
 
-
-	newInstanceMessage := &NewInstanceMessage{MessageID: messageID, Pid: pid}
+	newInstanceMessage := &NewInstanceMessage{MessageID: messageID, Pid: pid, 
+	Namespace: ablyDHandler.config.ChannelNamespace, ChannelPrefix: ablyDHandler.config.ChannelPrefix}
 
 	ablyDHandler.ablyCommandChannel.Publish(context.Background(), "new-instance", newInstanceMessage)
 
@@ -113,9 +111,9 @@ func (ablyDHandler *AblyDHandler) Accept(messageID string, args []string) {
 
 	PipeEndpoints(process, ablyEndpoint)
 
-	// TODO: Remove from list here and update presence
 	delete(ablyDHandler.ablyDState.Instances, launched.cmd.Process.Pid)
 	ablyDHandler.ablyCommandChannel.Presence.Update(context.Background(), ablyDHandler.ablyDState)
-	channelInput.Presence.Leave(context.Background(), "")
+	channelInput.Detach(context.Background())
+	channelOutput.Detach(context.Background())
 }
 

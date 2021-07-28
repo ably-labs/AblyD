@@ -36,7 +36,7 @@ servers:
 defaultContentType: application/json
 
 channels:
-  command:
+  '{namespace}:command':
     subscribe:
       summary: "Responses from the server when starting a process"
       message:
@@ -45,22 +45,43 @@ channels:
       summary: "Request to the overarching AblyD system"
       message:
         $ref: '#/components/messages/StartProcess'
-  '{pid}:serverinput':
+    parameters:
+      namespace: 
+        description: The channel namespace used by the AblyD instance(s)
+        schema:
+          type: string    
+  '{namespace}:{serverid}:{pid}:serverinput':
     publish:
       summary: "Data to send into the stdin of the process with matching pid to the namespace."
       message:
         $ref: '#/components/messages/ProcessInput'
     parameters:
-      pid:
-        description: The process ID returned when starting a process via the `command` channel.
+      namespace: 
+        description: The channel namespace used by the AblyD instance(s)
         schema:
           type: string
-  '{pid}:serveroutput':
+      serverid: 
+        description: The unique identifier for the server running the process. Provided when starting a process via the `{namespace}:command` channel. 
+        schema:
+          type: string   
+      pid:
+        description: The process ID returned when starting a process via the `{namespace}:command` channel.
+        schema:
+          type: string
+  '{namespace}:{serverid}:{pid}:serveroutput':
     subscribe:
       summary: "Messages from the stdout of a process being run."
       message:
         $ref: '#/components/messages/ProcessOutput'
     parameters:
+      namespace: 
+        description: The channel namespace used by the AblyD instance(s)
+        schema:
+          type: string
+      serverid: 
+        description: The unique identifier for the server running the process. Provided when starting a process via the `{namespace}:command` channel. 
+        schema:
+          type: string   
       pid:
         description: The process ID returned when starting a process via the `command` channel.
         schema:
@@ -248,8 +269,7 @@ components:
                   type: string
                   description: A line from the stdout of the process.
           $ref: "#/components/schemas/subscribeMessageWrapper"
-            
-            
+     
     ProcessInput:
       payload:
         type: object

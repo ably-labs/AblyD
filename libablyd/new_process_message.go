@@ -1,6 +1,6 @@
 package libablyd
 
-type NewInstanceMessage struct {
+type NewProcessMessage struct {
     MessageID string
     Pid string
     Namespace string

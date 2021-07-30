@@ -210,7 +210,7 @@ components:
       payload:
         type: object
         example:
-          name: new-instance
+          name: new-process
           data:
             MessageID: 384n92923n
             Pid: "83483992"
@@ -228,7 +228,7 @@ components:
                   type: string
                   description: Indicates the action the server is peforming
                   enum:
-                    - new-instance
+                    - new-process
                 data:
                   type: object
                   description: Object containing details on process that has started.

@@ -32,7 +32,7 @@ Once the server receives a message in the `command` channel, it will start up an
 }
 ```
 
-The client can identify the instance which has started for them by the `MessageID`, then use the `Prefix` to connect to an input and an output channel for the process. These will be of structure `{Prefix}{Pid}:serverinput` and `{Prefix}{Pid}:serveroutput`.
+The client can identify the process which has started for them by the `MessageID`, then use the `Prefix` to connect to an input and an output channel for the process. These will be of structure `{Prefix}{Pid}:serverinput` and `{Prefix}{Pid}:serveroutput`.
 
 Subscribing to the `serveroutput` channel will allow the client to receive any stdout messages from the server. The client can also publish messages into the `serverinput` channel which will be passed into the stdin of the process.
 
@@ -40,14 +40,14 @@ This will continue until the program naturally terminates, resulting in the proc
 
 ## Checking Current State of Processes and an AblyD Instance
 
-AblyD makes use of Ably Presence to identify what AblyD instances exist, and what processes are running on each instance. If you check the presence set of the `command` channel, you'll see each currently active instance present with the following attached data:
+AblyD makes use of Ably Presence to identify what AblyD instances exist, and what processes are running on each instance. If you check the presence set of the `command` channel, you'll see each currently active process present with the following attached data:
 
 ```json
 {
 	"ServerID": "my-server-id",
 	"Namespace": "ablyd",
-	"MaxInstances": 20,
-	"Instances": {
+	"MaxProcesses": 20,
+	"Processes": {
 		"3490348": "Running",
 		"Another PID": "Running"
 	}

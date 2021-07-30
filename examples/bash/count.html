@@ -28,7 +28,7 @@
     log(`Presence data of ${msg.clientId}`, msg.data);
   })
 
-  commandChannel.subscribe("new-instance", (msg) => {
+  commandChannel.subscribe("new-process", (msg) => {
     if (msg.data.MessageID == MESSAGEID) {
       let inputChannel = ably.channels.get(`${msg.data.ChannelPrefix}${msg.data.Pid}:serverinput`);
       let outputChannel = ably.channels.get(`[?rewind=20]${msg.data.ChannelPrefix}${msg.data.Pid}:serveroutput`);

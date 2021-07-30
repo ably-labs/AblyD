@@ -14,7 +14,7 @@ type AblyDHandler struct {
 	ablyRealtime   *ably.Realtime // Ably Realtime Instance
 	ablyCommandChannel *ably.RealtimeChannel
 
-	ablyDState AblyDInstanceState // Active instances running
+	ablyDState AblyDProcessState // Active instances running
 
 	log *LogScope
 
@@ -26,7 +26,7 @@ func NewAblyDHandler(ablyRealtime *ably.Realtime, config *ProcessConfig, newLog 
 	ablyDHandler.command = config.CommandName
 
 	ablyDHandler.startUpCommandChannel(ablyRealtime)
-	ablyDHandler.ablyDState = AblyDInstanceState{config.ServerID, config.ChannelNamespace, config.MaxForks, make(map[int]string)}
+	ablyDHandler.ablyDState = AblyDProcessState{config.ServerID, config.ChannelNamespace, config.MaxForks, make(map[int]string)}
 
 	ablyDHandler.enterPresence()
 
@@ -50,15 +50,15 @@ func (ablyDHandler *AblyDHandler) ListenForCommands(wg *sync.WaitGroup) {
 	// Subscribe to messages sent on the channel
 	ablyDHandler.ablyCommandChannel.Subscribe(context.Background(), "start", func(msg *ably.Message) {
 		stringData := msg.Data.(string)
-	    data := AblyDInstanceStartMessage{}
+	    data := AblyDProcessStartMessage{}
 	    json.Unmarshal([]byte(stringData), &data)
 
 	    if data.MessageID != "" {
 	    	if data.ServerID != "" && data.ServerID != ablyDHandler.config.ServerID {
 	    		return
 	    	}
-			if (ablyDHandler.ablyDState.MaxInstances <= len(ablyDHandler.ablyDState.Instances)) {
-				ablyDHandler.ablyCommandChannel.Publish(context.Background(), "Error", "Failed to create new instance: Max instances reached")
+			if (ablyDHandler.ablyDState.MaxProcesses <= len(ablyDHandler.ablyDState.Processes)) {
+				ablyDHandler.ablyCommandChannel.Publish(context.Background(), "Error", "Failed to create new process: Max processes reached")
 			} else {
 				// TODO: Should use msg ID not data, 
 				// but this does not currently work https://github.com/ably/ably-go/issues/58
@@ -97,21 +97,22 @@ func (ablyDHandler *AblyDHandler) Accept(messageID string, args []string) {
 
 	// Enter presence of serverinput
 	channelInput.Presence.Enter(context.Background(), "")
+	channelOutput.Presence.Enter(context.Background(), "")
 
 	ablyEndpoint := NewAblyEndpoint(channelInput, channelOutput, log)
 
-	newInstanceMessage := &NewInstanceMessage{MessageID: messageID, Pid: pid, 
+	newProcessMessage := &NewProcessMessage{MessageID: messageID, Pid: pid, 
 	Namespace: ablyDHandler.config.ChannelNamespace, ChannelPrefix: ablyDHandler.config.ChannelPrefix}
 
-	ablyDHandler.ablyCommandChannel.Publish(context.Background(), "new-instance", newInstanceMessage)
+	ablyDHandler.ablyCommandChannel.Publish(context.Background(), "new-process", newProcessMessage)
 
-	// Add to our list of active instances
-	ablyDHandler.ablyDState.Instances[launched.cmd.Process.Pid] = "Running"
+	// Add to our list of active processes
+	ablyDHandler.ablyDState.Processes[launched.cmd.Process.Pid] = "Running"
 	ablyDHandler.ablyCommandChannel.Presence.Update(context.Background(), ablyDHandler.ablyDState)
 
 	PipeEndpoints(process, ablyEndpoint)
 
-	delete(ablyDHandler.ablyDState.Instances, launched.cmd.Process.Pid)
+	delete(ablyDHandler.ablyDState.Processes, launched.cmd.Process.Pid)
 	ablyDHandler.ablyCommandChannel.Presence.Update(context.Background(), ablyDHandler.ablyDState)
 	channelInput.Detach(context.Background())
 	channelOutput.Detach(context.Background())

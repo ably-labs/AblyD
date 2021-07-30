@@ -56,6 +56,10 @@ AblyD makes use of Ably Presence to identify what AblyD instances exist, and wha
 
 This indicates the most processes you can have, and the currently active processes. The server will also enter the presence set of any `serverinput` channels to indicate it is actively listening to them.
 
+## Interacting with an AblyD Instance
+
+To simplify the process of interacting with an AblyD instance, there is currently a client available for NodeJS on [GitHub](https://github.com/ably-labs/Ablyd-client) and on [npm](https://www.npmjs.com/package/ablyd-client).
+
 ## Testing
 
 You can use the `/examples/bash/count.html` file to easily test this out. Replace the `INSERT_API_KEY_HERE` with the same API key used in your main Go function, and load the webpage. If you press the publish button on that page, you should see counting coming from the server!

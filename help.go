@@ -35,8 +35,6 @@ Options:
                                  From most to least verbose:
                                  debug, trace, access, info, error, fatal
 
-  --apikey=APIKEY                       Ably API key to use. REQUIRED
-
 BSD license: Run '{{binary}} --license' for details.
 `
 	short = `

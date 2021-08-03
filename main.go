@@ -8,6 +8,7 @@ package main
 import (
 	"ablyD/libablyd"
 	"sync"
+	"os"
 
 	"github.com/ably/ably-go/ably"
 	"github.com/joho/godotenv"
@@ -21,7 +22,7 @@ func main() {
 	godotenv.Load()
 
 	client, err := ably.NewRealtime(
-		ably.WithKey(config.AblyAPIKey),
+		ably.WithKey(os.Getenv("ABLYD_API_KEY")),
 		ably.WithEchoMessages(false),
 		ably.WithClientID(config.ServerID))
 

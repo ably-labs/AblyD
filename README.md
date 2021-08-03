@@ -9,19 +9,29 @@ Firstly you need to get an Ably API key. You can sign up for an account with [Ab
 Now all you need to do is run the main go file, passing in the command line command you want to be run as a parameter! For example, to use a bash file `count.sh`, which is included in this repo's `examples` folder, just run:
 
 ```bash
-~ $ ./ablyD --apikey=YOUR_API_KEY ./examples/bash/count.sh
+~ $ ./ablyD ./examples/bash/count.sh
 ```
 
-The program is now running, waiting for a message in the `command` channel in Ably to be sent. The message's data field should match the structure, with the value `start` for the message's name:
+Make sure you've specified your [your API key](https://www.ably.com/accounts/any/apps/any/app_keys) in your environment, or by passing it in as `ABLYD_API_KEY=ABC123 ./ablyD ./examples/bash/count.sh`.
 
-```json
-{
-  "MessageID": "unique string value",
-  "Args": [ "some", "additional", "args", "for", "the", "programs" ]
-}
+The program is now running, waiting for a message in the `ablyd:command` channel in Ably to be sent. For example, to start a process with curl, you would send:
+
+```bash
+curl -X POST https://rest.ably.io/channels/ablyd:command/messages \
+  -u "${API_KEY}" \
+  -H 'Content-Type: application/json' \
+  --data \
+  '{
+    "name": "start",
+    "data": {
+      "MessageID": "unique string value",
+      "Args": [ "some", "additional", "args", "for", "the", "programs" ]
+    },
+    "format":"json"
+  }'
 ```
 
-Once the server receives a message in the `command` channel, it will start up an instance of the program, using the `Args` you specify in the message as well. Once the program has started up, the server will send a message onto the `command` channel of structure:
+Once the server receives a message in the `ablyd:command` channel, it will start up an instance of the program, using the `Args` you specify in the message as well. Once the program has started up, the server will send a message onto the `command` channel of structure:
 
 ```json
 {

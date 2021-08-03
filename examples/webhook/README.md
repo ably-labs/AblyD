@@ -12,7 +12,7 @@ Once you're done using the Rule, you can close it by closing this program with `
 
 A simple series of steps to try this out would be:
 
-* Start up an instance of AblyD from the base of the directory with `./ablyD --apikey=YOUR_ABLY_API _KEY./examples/bash/count.sh`. Replace `YOUR_ABLY_API_KEY` with [your API key](https://www.ably.com/accounts/any/apps/any/app_keys) from the Ably App Dashboard.
+* Start up an instance of AblyD from the base of the directory with `./ablyD ./examples/bash/count.sh`. Make sure you've specified your [your API key](https://www.ably.com/accounts/any/apps/any/app_keys) in your environment, or by passing it in as `ABLYD_API_KEY=ABC123 ./ablyD ./examples/bash/count.sh`.
 * Create a .env file in this folder with the required details
 * [Create a requestbin endpoint](https://requestbin.com/) as a test endpoint, and add that to the .env file
 * Run `npm install` then `node webhook.js`, and the above process should occur!

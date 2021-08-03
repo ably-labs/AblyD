@@ -18,7 +18,6 @@ import (
 type Config struct {
 	MaxForks          int      // Number of allowable concurrent forks
 	LogLevel          libablyd.LogLevel
-	AblyAPIKey		  string
 	ServerID		  string
 	ChannelNamespace  string
 	ChannelPrefix  	  string	 // Ably channel prefix to use
@@ -36,7 +35,6 @@ func parseCommandLine() *Config {
 	versionFlag := flag.Bool("version", false, "Print version and exit")
 	logLevelFlag := flag.String("loglevel", "access", "Log level, one of: debug, trace, access, info, error, fatal")
 	maxForksFlag := flag.Int("maxforks", 20, "Max forks, zero means unlimited")
-	ablyApiKey := flag.String("apikey", "INSERT_API_KEY", "Ably API key")
 	channelNamespace := flag.String("namespace", "ablyd", "Ably Channel Namespace")
 	serverID := flag.String("serverid", xid.New().String(), "Unique ID for the server")
 
@@ -51,7 +49,6 @@ func parseCommandLine() *Config {
 		}
 	}
 
-	mainConfig.AblyAPIKey = *ablyApiKey
 	mainConfig.ServerID = *serverID
 	mainConfig.ChannelNamespace= *channelNamespace
 	mainConfig.ChannelPrefix = *channelNamespace + ":" + *serverID + ":"
@@ -73,12 +70,6 @@ func parseCommandLine() *Config {
 	if *versionFlag {
 		fmt.Printf("%s %s\n", HelpProcessName(), Version())
 		os.Exit(0)
-	}
-
-	if mainConfig.AblyAPIKey == "INSERT_API_KEY" {
-		fmt.Printf("Please provide your Ably API key with -apikey=API_KEY\n")
-		ShortHelp()
-		os.Exit(1)
 	}
 
 	args := flag.Args()

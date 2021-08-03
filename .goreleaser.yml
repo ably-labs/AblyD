@@ -1,0 +1,85 @@
+# This is an example .goreleaser.yml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^examples:'
+brews:
+  -
+    name: ablyd
+
+    # GOARM to specify which 32-bit arm version to use if there are multiple versions
+    # from the build section. Brew formulas support atm only one 32-bit version.
+    # Default is 6 for all artifacts or each id if there a multiple versions.
+    goarm: 6
+
+    # NOTE: make sure the url_template, the token and given repo (github or gitlab) owner and name are from the
+    # same kind. We will probably unify this in the next major version like it is done with scoop.
+
+    # GitHub/GitLab repository to push the formula to
+    tap:
+      owner: ably-labs
+      name: homebrew-ablyd
+
+    # Template for the url which is determined by the given Token (github or gitlab)
+    # Default for github is "https://github.com/<repo_owner>/<repo_name>/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "http://github.com/ably-labs/ablyd/releases/{{ .Tag }}/{{ .ArtifactName }}"
+
+    # Git author used to commit to the repository.
+    # Defaults are shown.
+    commit_author:
+      name: tomczoink
+      email: tc13270@my.bristol.ac.uk
+
+    # Folder inside the repository to put the formula.
+    # Default is the root folder.
+    folder: Formula
+
+    # Template of your app's description.
+    # Default is empty.
+    description: "AblyD wraps around any program and makes its stdin and stdout available via a Pub/Sub system, Ably."
+
+    license: "Apache-2.0"
+
+    # Setting this will prevent goreleaser to actually try to commit the updated
+    # formula - instead, the formula file will be stored on the dist folder only,
+    # leaving the responsibility of publishing it to the user.
+    # If set to auto, the release will not be uploaded to the homebrew tap
+    # in case there is an indicator for prerelease in the tag e.g. v1.0.0-rc1
+    # Default is false.
+    # skip_upload: false
+
+    # Packages your package depends on.
+    # dependencies:
+    #   - name: github.com/ably/ably-go
+    #   - name: github.com/joho/godotenv
+    #   - name: github.com/rs/xid
+    #   - name: github.com/ugorji/go
+    #   - name: golang.org/x/net

@@ -2,6 +2,8 @@
 
 This is a basic demo which takes [websocketd](https://github.com/joewalnes/websocketd), which makes command-line commands on a device available to other devices via WebSockets, and provides this functionality through [Ably](https://www.ably.com).
 
+We also have a [blog post](https://ably.com/blog/fine-grained-access-control-server-ablyd) going into greater detail.
+
 ## Setup
 
 Firstly you need to get an Ably API key. You can sign up for an account with [Ably](https://www.ably.com/) and access your API key from the [app dashboard](https://www.ably.com/accounts/any/apps/any/app_keys). 

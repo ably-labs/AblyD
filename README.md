@@ -4,6 +4,25 @@ This is a basic demo which takes [websocketd](https://github.com/joewalnes/webso
 
 We also have a [blog post](https://ably.com/blog/fine-grained-access-control-server-ablyd) going into greater detail.
 
+## Install
+
+### Brew
+
+You can install AblyD using Brew with:
+
+```sh
+$ brew install ably-labs/homebrew-tap/ablyd 
+```
+
+### apt-get
+
+You can install AblyD using apt-get with:
+
+```sh
+$ echo "deb [trusted=yes] https://apt.fury.io/tomczoink/ ./" | sudo tee -a /etc/apt/sources.list > /dev/null
+$ apt-get install ablyd
+```
+
 ## Setup
 
 Firstly you need to get an Ably API key. You can sign up for an account with [Ably](https://www.ably.com/) and access your API key from the [app dashboard](https://www.ably.com/accounts/any/apps/any/app_keys). 

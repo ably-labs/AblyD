@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<script src="https://cdn.ably.io/lib/ably.min-1.js"></script>
+<h1>AblyD Example</h1>
+
+<div class="row">
+  <p>This demo will make a request through Ably to the server running AblyD, telling it to publish output from its current script to a channel matching `{namespace}:{serverID}:{processID}:serveroutput`.</p>
+  <p>Make sure to replace the 'YOUR_API_KEY' in the JavaScript with your Ably API key!</p>
+  <button onclick="publish()">Publish the command to the server to run the script</button>
+</div>
+
+<pre id="log"></pre>
+<script>
+  // This should eventually be the message ID, but currently the Go lib doesn't
+  // Let you access the message ID
+  const MESSAGEID = Math.random().toString();
+  const NAMESPACE = 'ablyd'; // Change this to match your AblyD instance's namespace where relevant
+
+  // helper function: log message to screen
+  function log(type, msg) {
+    document.getElementById('log').textContent += `${type}: ${JSON.stringify(msg)}\n`;
+  }
+
+  // Get an Ably API key from https://www.ably.com/accounts/any/apps/any/api_keys
+  let ably = new Ably.Realtime('YOUR_API_KEY');
+  let commandChannel = ably.channels.get(`${NAMESPACE}:command`);
+
+  commandChannel.presence.subscribe((msg) => {
+    log(`Presence data of ${msg.clientId}`, msg.data);
+  })
+
+  commandChannel.subscribe("new-process", (msg) => {
+    if (msg.data.MessageID == MESSAGEID) {
+      let inputChannel = ably.channels.get(`${msg.data.ChannelPrefix}${msg.data.Pid}:serverinput`);
+      let outputChannel = ably.channels.get(`[?rewind=20]${msg.data.ChannelPrefix}${msg.data.Pid}:serveroutput`);
+      outputChannel.subscribe((outputMsg) => {
+        log(`Message from ${msg.data.ChannelPrefix}${msg.data.Pid}`, outputMsg.data);
+      });
+    }
+  });
+
+  function publish() {
+    let data = {
+      "MessageID": MESSAGEID,
+      // "ServerID": "SERVER_ID" // Uncomment and specify an active server's ID to only have that server process the request
+    };
+    commandChannel.publish("start", data);
+  }
+</script>
